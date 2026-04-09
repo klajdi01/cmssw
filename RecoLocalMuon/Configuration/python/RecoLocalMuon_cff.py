@@ -21,6 +21,7 @@ from CalibMuon.CSCCalibration.CSCIndexer_cfi import *
 #------------------------------------ RPC -----------------------------------------------
 # 1D RecHits
 from RecoLocalMuon.RPCRecHit.rpcRecHits_cfi import *
+from RecoLocalMuon.RPCRecHit.rpcRecHitsPhase2_cfi import *
 
 #----------------------------------------------------------------------------------------
 # DT sequence for the standard reconstruction chain 
@@ -64,3 +65,9 @@ from Configuration.Eras.Modifier_phase2_muon_cff import phase2_muon
 phase2_muon.toReplaceWith( muonlocalrecoTask , _phase2_muonlocalrecoTask )
 from Configuration.Eras.Modifier_phase2_GE0_cff import phase2_GE0
 phase2_GE0.toReplaceWith( muonlocalrecoTask , _phase2_ge0_muonlocalrecoTask )
+
+_phase2_rpc_devel_muonlocalrecoTask = _phase2_muonlocalrecoTask.copyAndExclude([me0LocalRecoTask])
+_phase2_rpc_devel_muonlocalrecoTask.add(rpcRecHitsPhase2)
+
+from Configuration.Eras.Modifier_phase2_rpc_devel_cff import phase2_rpc_devel
+phase2_rpc_devel.toReplaceWith(muonlocalrecoTask, _phase2_rpc_devel_muonlocalrecoTask)
