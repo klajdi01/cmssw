@@ -43,10 +43,14 @@ private:
 
   float sumTime_;
   float sumTime2_;
+  float minTime_;
+  float maxTime_;
   uint16_t nTime_;
 
   float sumY_;
   float sumY2_;
+  float minY_;
+  float maxY_;
   uint16_t nY_;
 };
 
