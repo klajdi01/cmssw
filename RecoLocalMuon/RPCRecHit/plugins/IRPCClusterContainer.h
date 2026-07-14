@@ -10,6 +10,6 @@
 #include <set>
 
 class IRPCCluster;
-typedef std::set<IRPCCluster> IRPCClusterContainer;
+typedef std::multiset<IRPCCluster> IRPCClusterContainer;
 
 #endif

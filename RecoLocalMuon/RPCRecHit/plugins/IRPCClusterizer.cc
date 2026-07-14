@@ -27,6 +27,7 @@ IRPCClusterContainer IRPCClusterizer::makeInitialClusters(const IRPCDigiCollecti
 
     IRPCDigiTime digiTime(*digi);
     cl.addTime(digiTime.time());
+    cl.addY(digiTime.coordinateY());
 
     initialClusters.insert(cl);
   }
