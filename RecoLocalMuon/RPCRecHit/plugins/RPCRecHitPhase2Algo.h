@@ -11,13 +11,13 @@
 
 #include "DataFormats/GeometrySurface/interface/LocalError.h"
 #include "DataFormats/GeometryVector/interface/LocalPoint.h"
+#include "DataFormats/MuonDetId/interface/RPCDetIdFwd.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHit.h"
 
 #include "IRPCCluster.h"
 #include "RPCClusterPhase2.h"
 
 class RPCRoll;
-class RPCDetId;
 
 class RPCRecHitPhase2Algo {
 public:
