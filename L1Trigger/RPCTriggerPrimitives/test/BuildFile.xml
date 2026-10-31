@@ -2,3 +2,15 @@
   <use name="catch2"/>
   <use name="L1Trigger/RPCTriggerPrimitives"/>
 </bin>
+<library file="RPCTriggerPrimitivesIRPCValidator.cc" name="testL1TriggerRPCTriggerPrimitivesValidator">
+  <use name="DataFormats/MuonDetId"/>
+  <use name="DataFormats/RPCDigi"/>
+  <use name="DataFormats/RPCRecHit"/>
+  <use name="FWCore/Framework"/>
+  <use name="FWCore/ParameterSet"/>
+  <use name="Geometry/RPCGeometry"/>
+  <use name="Geometry/Records"/>
+  <use name="L1Trigger/RPCTriggerPrimitives"/>
+  <use name="SimDataFormats/TrackingHit"/>
+  <flags EDM_PLUGIN="1"/>
+</library>

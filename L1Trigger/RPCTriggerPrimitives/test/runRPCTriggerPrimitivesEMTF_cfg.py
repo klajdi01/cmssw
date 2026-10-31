@@ -31,8 +31,7 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEv
 process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring(options.inputFiles))
 process.MessageLogger.cerr.FwkReport.reportEvery = 100
 
-from L1Trigger.RPCTriggerPrimitives.rpcTriggerPrimitiveDigis_cfi import rpcTriggerPrimitiveDigis
-process.simRpcTriggerPrimitiveDigis = rpcTriggerPrimitiveDigis.clone(RPCDigiProducer = 'simMuonRPCDigis')
+process.load('L1Trigger.RPCTriggerPrimitives.simRpcTriggerPrimitiveDigis_cfi')
 
 process.load('L1Trigger.L1TMuonEndCap.simEmtfDigis_cfi')
 process.simEmtfDigisRPCTP = process.simEmtfDigis.clone(RPCTPEnable = True)

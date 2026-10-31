@@ -1,3 +1,6 @@
+#ifndef DataFormats_RPCDigi_IRPCDigiTime_h
+#define DataFormats_RPCDigi_IRPCDigiTime_h
+
 #include "DataFormats/RPCDigi/interface/IRPCDigi.h"
 
 class IRPCDigiTime {
@@ -12,3 +15,5 @@ private:
   IRPCDigi theDigi;
   float TDC2Time(int BX, int SBX, int FT);
 };
+
+#endif

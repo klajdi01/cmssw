@@ -3,6 +3,7 @@
 #include "L1Trigger/L1TMuonEndCap/interface/SectorProcessorLUT.h"
 
 #include "Geometry/RPCGeometry/interface/RPCGeometry.h"  // for special treatments for iRPC
+#include "Geometry/CommonTopologies/interface/StripTopology.h"
 
 void PrimitiveConversion::configure(const GeometryTranslator* tp_geom,
                                     const SectorProcessorLUT* pc_lut,
@@ -625,7 +626,16 @@ void PrimitiveConversion::convert_rpc(int pc_sector,
     if (is_irpc) {
       const RPCRoll* roll = dynamic_cast<const RPCRoll*>(tp_geom_->getRPCGeometry().roll(tp_detId));
       emtf_assert(roll != nullptr);  // failed to get RPC roll
-      const GlobalPoint& new_gp = roll->surface().toGlobal(LocalPoint(tp_data.x, tp_data.y, 0));
+      LocalPoint lp(tp_data.x, tp_data.y, 0);
+      if (tp_data.x == -999999.f) {
+        // No local x (iRPC digis and RPC trigger primitives give only y): take the centre of
+        // the cluster at the measured y, following the strip direction of the trapezoid
+        const float y = (tp_data.y == -999999.f) ? 0.f : tp_data.y;
+        const StripTopology& topology = roll->specificTopology();
+        const float strip = 0.5f * (tp_data.strip_low + tp_data.strip_hi) - 0.5f;  // strips are numbered from 1
+        lp = topology.localPosition(MeasurementPoint(strip, y / topology.stripLength()));
+      }
+      const GlobalPoint& new_gp = roll->surface().toGlobal(lp);
       glob_phi = emtf::rad_to_deg(gp.phi().value());  // using 'gp' instead of 'new_gp' for phi
       glob_theta = emtf::rad_to_deg(new_gp.theta());
       glob_eta = new_gp.eta();
