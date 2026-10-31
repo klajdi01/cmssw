@@ -11,24 +11,26 @@
 #include <cstdint>
 #include <iosfwd>
 
-class RPCDigiPhase2 {
-public:
-  explicit RPCDigiPhase2(int strip, int bx, int sbx);
-  RPCDigiPhase2();
+namespace io_v1 {
+  class RPCDigiPhase2 {
+  public:
+    explicit RPCDigiPhase2(int strip, int bx, int sbx);
+    RPCDigiPhase2();
 
-  bool operator==(const RPCDigiPhase2& digi) const;
-  bool operator<(const RPCDigiPhase2& digi) const;
-  void print() const;
-  int strip() const { return strip_; }
-  int bx() const { return bx_; }
-  int sbx() const { return sbx_; }
+    bool operator==(const RPCDigiPhase2& digi) const;
+    bool operator<(const RPCDigiPhase2& digi) const;
+    void print() const;
+    int strip() const { return strip_; }
+    int bx() const { return bx_; }
+    int sbx() const { return sbx_; }
 
-private:
-  uint16_t strip_;
-  int32_t bx_;  // for BX
-  int8_t sbx_;  // for sub-BX
-};
+  private:
+    uint16_t strip_;
+    int32_t bx_;  // for BX
+    int8_t sbx_;  // for sub-BX
+  };
 
-std::ostream& operator<<(std::ostream& o, const RPCDigiPhase2& digi);
-
+  std::ostream& operator<<(std::ostream& o, const RPCDigiPhase2& digi);
+}  // namespace io_v1
+using RPCDigiPhase2 = io_v1::RPCDigiPhase2;
 #endif

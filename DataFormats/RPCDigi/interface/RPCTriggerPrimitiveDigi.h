@@ -8,6 +8,11 @@
  * (L1Trigger/RPCTriggerPrimitives) for the L1 muon track finders.
  *
  * Strips are numbered from 1, as in RPCDigi.
+ *
+ * Optionally the cluster carries a time and a position along the strips
+ * (local y), as measured by the iRPC two-end readout:
+ *  - time: mean strip time in ns, 0 for a prompt muon (as in the digitizer)
+ *  - y: mean local y in cm, 0 at the centre of the roll
  */
 
 #include <cstdint>
@@ -19,6 +24,7 @@ namespace io_v1 {
     explicit RPCTriggerPrimitiveDigi(int stripLow, int stripHi, int bx);
     RPCTriggerPrimitiveDigi();
 
+    /// Compares the strips and the BX only, as RPCDigi does
     bool operator==(const RPCTriggerPrimitiveDigi& digi) const;
     /// Order by BX, then by first strip
     bool operator<(const RPCTriggerPrimitiveDigi& digi) const;
@@ -31,12 +37,30 @@ namespace io_v1 {
     int bx() const { return bx_; }
     bool isValid() const { return stripLow_ > 0 && stripHi_ >= stripLow_; }
 
+    bool hasTime() const { return hasTime_; }
+    float time() const { return time_; }
+    void setTime(float time) {
+      time_ = time;
+      hasTime_ = true;
+    }
+
+    bool hasY() const { return hasY_; }
+    float y() const { return y_; }
+    void setY(float y) {
+      y_ = y;
+      hasY_ = true;
+    }
+
     void print() const;
 
   private:
     uint16_t stripLow_;
     uint16_t stripHi_;
     int16_t bx_;
+    float time_;
+    float y_;
+    bool hasTime_;
+    bool hasY_;
   };
 
   std::ostream& operator<<(std::ostream& o, const RPCTriggerPrimitiveDigi& digi);

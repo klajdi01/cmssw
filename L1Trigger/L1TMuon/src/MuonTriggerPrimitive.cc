@@ -210,9 +210,9 @@ TriggerPrimitive::TriggerPrimitive(const RPCDetId& detid, const RPCTriggerPrimit
   _rpc.emtf_link = 0;
   _rpc.bx = digi.bx();
   _rpc.valid = digi.isValid();
-  _rpc.x = -999999.;
-  _rpc.y = -999999.;
-  _rpc.time = -999999.;
+  _rpc.x = -999999.;  // the local x follows from the strips and y, it needs the geometry
+  _rpc.y = digi.hasY() ? digi.y() : -999999.;
+  _rpc.time = digi.hasTime() ? digi.time() : -999999.;
   _rpc.isCPPF = false;
 }
 

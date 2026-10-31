@@ -3,9 +3,10 @@
 
 namespace io_v1 {
   RPCTriggerPrimitiveDigi::RPCTriggerPrimitiveDigi(int stripLow, int stripHi, int bx)
-      : stripLow_(stripLow), stripHi_(stripHi), bx_(bx) {}
+      : stripLow_(stripLow), stripHi_(stripHi), bx_(bx), time_(0.f), y_(0.f), hasTime_(false), hasY_(false) {}
 
-  RPCTriggerPrimitiveDigi::RPCTriggerPrimitiveDigi() : stripLow_(0), stripHi_(0), bx_(0) {}
+  RPCTriggerPrimitiveDigi::RPCTriggerPrimitiveDigi()
+      : stripLow_(0), stripHi_(0), bx_(0), time_(0.f), y_(0.f), hasTime_(false), hasY_(false) {}
 
   bool RPCTriggerPrimitiveDigi::operator==(const RPCTriggerPrimitiveDigi& digi) const {
     return stripLow_ == digi.stripLow_ && stripHi_ == digi.stripHi_ && bx_ == digi.bx_;
@@ -18,10 +19,13 @@ namespace io_v1 {
   }
 
   std::ostream& operator<<(std::ostream& o, const RPCTriggerPrimitiveDigi& digi) {
-    return o << " strips " << digi.stripLow() << "-" << digi.stripHi() << " bx " << digi.bx();
+    o << " strips " << digi.stripLow() << "-" << digi.stripHi() << " bx " << digi.bx();
+    if (digi.hasTime())
+      o << " time " << digi.time();
+    if (digi.hasY())
+      o << " y " << digi.y();
+    return o;
   }
 
-  void RPCTriggerPrimitiveDigi::print() const {
-    std::cout << "Strips " << stripLow() << "-" << stripHi() << " bx " << bx() << std::endl;
-  }
+  void RPCTriggerPrimitiveDigi::print() const { std::cout << "RPCTriggerPrimitiveDigi" << *this << std::endl; }
 }  // namespace io_v1

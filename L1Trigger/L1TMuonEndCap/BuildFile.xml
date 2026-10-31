@@ -6,6 +6,7 @@
 <use name="FWCore/Framework"/>
 <use name="FWCore/ParameterSet"/>
 <use name="DataFormats/L1TMuon"/>
+<use name="Geometry/CommonTopologies"/>
 <use name="L1Trigger/L1TMuon"/>
 <use name="PhysicsTools/TensorFlow"/>
 <use name="hls"/>

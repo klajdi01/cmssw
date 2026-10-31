@@ -4,6 +4,8 @@
  * \author J. Shin -- Kyung Hee University
  */
 
+#include "DataFormats/Common/interface/OwnVector.h"
+#include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "Geometry/RPCGeometry/interface/RPCRoll.h"

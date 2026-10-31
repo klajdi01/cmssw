@@ -1,3 +1,6 @@
+#ifndef DataFormats_RPCDigi_RPCDigiPhase2Time_h
+#define DataFormats_RPCDigi_RPCDigiPhase2Time_h
+
 #include "DataFormats/RPCDigi/interface/RPCDigiPhase2.h"
 
 class RPCDigiPhase2Time {
@@ -8,3 +11,5 @@ public:
 private:
   RPCDigiPhase2 theDigi;
 };
+
+#endif
