@@ -31,8 +31,12 @@ public:
                float& time,
                float& timeErr) const;
 
-  bool compute(
-      const RPCRoll& roll, const IRPCCluster& cluster, LocalPoint& point, LocalError& error, float& time, float& timeErr) const;
+  bool compute(const RPCRoll& roll,
+               const IRPCCluster& cluster,
+               LocalPoint& point,
+               LocalError& error,
+               float& time,
+               float& timeErr) const;
 
   RPCRecHit build(const RPCRoll& roll, const RPCDetId& rpcId, const RPCClusterPhase2& cluster) const;
   RPCRecHit build(const RPCRoll& roll, const RPCDetId& rpcId, const IRPCCluster& cluster) const;

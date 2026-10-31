@@ -15,6 +15,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
 #include "SimMuon/RPCDigitizer/src/RPCSynchronizer.h"
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -97,8 +98,8 @@ void RPCDigiPhase2Producer::produce(edm::Event& e, const edm::EventSetup& eventS
   std::unique_ptr<MixCollection<PSimHit>> hits(new MixCollection<PSimHit>(cf.product()));
 
   // Create empty output
-  std::unique_ptr<RPCDigiPhase2Collection> pDigis(new RPCDigiPhase2Collection());
-  std::unique_ptr<RPCDigitizerPhase2SimLinks> RPCDigitSimLink(new RPCDigitizerPhase2SimLinks());
+  std::unique_ptr<RPCDigiPhase2Collection> pDigis = std::make_unique<RPCDigiPhase2Collection>();
+  std::unique_ptr<RPCDigitizerPhase2SimLinks> RPCDigitSimLink = std::make_unique<RPCDigitizerPhase2SimLinks>();
 
   theRPCDigitizerPhase2->doAction(
       *hits, *pDigis, *RPCDigitSimLink, engine);  //make "bakelite RPC" digitizer do the action

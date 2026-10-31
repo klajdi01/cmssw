@@ -12,7 +12,7 @@
 namespace {
   constexpr float kMaxClusterYDistance = 9.f;       // cm
   constexpr float kMaxClusterTimeDifference = 3.f;  // ns
-}
+}  // namespace
 
 IRPCCluster::IRPCCluster()
     : fstrip_(0),

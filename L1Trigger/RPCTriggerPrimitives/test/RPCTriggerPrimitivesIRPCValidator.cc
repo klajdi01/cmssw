@@ -60,12 +60,12 @@ private:
   const double tolerance_;
 
   long nEvents_ = 0;
-  long nRPC_ = 0;              // standard RPC trigger primitives
-  long nIRPC_ = 0;             // iRPC trigger primitives
-  long nIRPCTimeAndY_ = 0;     // ... with a time and a local y
-  long nIRPCRecHits_ = 0;      // iRPC RecHits
-  long nMatched_ = 0;          // iRPC trigger primitives with a RecHit of the same strips and BX
-  long nSame_ = 0;             // ... and the same time and local y
+  long nRPC_ = 0;           // standard RPC trigger primitives
+  long nIRPC_ = 0;          // iRPC trigger primitives
+  long nIRPCTimeAndY_ = 0;  // ... with a time and a local y
+  long nIRPCRecHits_ = 0;   // iRPC RecHits
+  long nMatched_ = 0;       // iRPC trigger primitives with a RecHit of the same strips and BX
+  long nSame_ = 0;          // ... and the same time and local y
   double maxDiffTime_ = 0.;
   double maxDiffY_ = 0.;
   Stats time_, y_, residualY_;

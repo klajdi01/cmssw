@@ -179,16 +179,13 @@ TEST_CASE("RPCTriggerPrimitivesBuilder::clusterIRPC", "[RPCTriggerPrimitives]") 
     config.maxTimeSpreadIRPC = 5.f;
     config.maxYSpreadIRPC = 30.f;
     RPCTriggerPrimitivesBuilder wideBuilder(config);
-    auto out = wideBuilder.clusterIRPC(
-        {irpcDigi(5, 0, 0, 0, 0), irpcDigi(6, 1, 9, 1, 8), irpcDigi(7, 0, 10, 0, 0)});
+    auto out = wideBuilder.clusterIRPC({irpcDigi(5, 0, 0, 0, 0), irpcDigi(6, 1, 9, 1, 8), irpcDigi(7, 0, 10, 0, 0)});
     REQUIRE(out == std::vector<TP>{TP(5, 7, 0)});
   }
 
   SECTION("gap and BX split clusters, output ordered by BX and first strip") {
-    auto out = builder.clusterIRPC({IRPCDigi(9, 1, 1, 0, 0, 0, 0),
-                                    irpcDigi(2, 0, 0, 0, 0),
-                                    irpcDigi(1, 0, 0, 0, 0),
-                                    irpcDigi(4, 0, 0, 0, 0)});
+    auto out = builder.clusterIRPC(
+        {IRPCDigi(9, 1, 1, 0, 0, 0, 0), irpcDigi(2, 0, 0, 0, 0), irpcDigi(1, 0, 0, 0, 0), irpcDigi(4, 0, 0, 0, 0)});
     REQUIRE(out == std::vector<TP>{TP(1, 2, 0), TP(4, 4, 0), TP(9, 9, 1)});
   }
 }

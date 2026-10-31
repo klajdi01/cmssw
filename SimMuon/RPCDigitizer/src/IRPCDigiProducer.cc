@@ -15,6 +15,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
 #include "SimMuon/RPCDigitizer/src/RPCSynchronizer.h"
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -98,8 +99,8 @@ void IRPCDigiProducer::produce(edm::Event& e, const edm::EventSetup& eventSetup)
   std::unique_ptr<MixCollection<PSimHit>> hits(new MixCollection<PSimHit>(cf.product()));
 
   // Create empty output
-  std::unique_ptr<IRPCDigiCollection> pDigis(new IRPCDigiCollection());
-  std::unique_ptr<IRPCDigitizerSimLinks> IRPCDigitSimLink(new IRPCDigitizerSimLinks());
+  std::unique_ptr<IRPCDigiCollection> pDigis = std::make_unique<IRPCDigiCollection>();
+  std::unique_ptr<IRPCDigitizerSimLinks> IRPCDigitSimLink = std::make_unique<IRPCDigitizerSimLinks>();
 
   theIRPCDigitizer->doAction(*hits, *pDigis, *IRPCDigitSimLink, engine);  //make "IRPC" digitizer do the action
 
