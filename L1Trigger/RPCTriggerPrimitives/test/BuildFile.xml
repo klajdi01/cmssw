@@ -1,0 +1,4 @@
+<bin file="test_catch2_*.cc" name="testL1TriggerRPCTriggerPrimitives">
+  <use name="catch2"/>
+  <use name="L1Trigger/RPCTriggerPrimitives"/>
+</bin>

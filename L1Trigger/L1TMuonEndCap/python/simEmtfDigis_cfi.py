@@ -33,6 +33,7 @@ simEmtfDigisMC = cms.EDProducer("L1TMuonEndCapTrackProducer",
     CSCInput = cms.InputTag('simCscTriggerPrimitiveDigis','MPCSORTED'),
     CSCComparatorInput = cms.InputTag('simMuonCSCDigis','MuonCSCComparatorDigi'),
     RPCInput = cms.InputTag('simMuonRPCDigis'),
+    RPCTPInput = cms.InputTag('simRpcTriggerPrimitiveDigis'),  # RPC trigger primitives from L1Trigger/RPCTriggerPrimitives
     CPPFInput = cms.InputTag('simCPPFDigis'),  ## Cannot use in MC workflow, does not exist yet.  CPPFEnable set to False - AWB 01.06.18
     GEMInput = cms.InputTag('simMuonGEMPadDigiClusters'),
     ME0Input = cms.InputTag('me0TriggerConvertedPseudoDigis'),
@@ -43,6 +44,7 @@ simEmtfDigisMC = cms.EDProducer("L1TMuonEndCapTrackProducer",
     RPCEnable = cms.bool(True),   # Use clustered RPC hits from CPPF in track-building
     IRPCEnable = cms.bool(False),
     CPPFEnable = cms.bool(False), # Use CPPF-emulated clustered RPC hits from CPPF as the RPC hits
+    RPCTPEnable = cms.bool(False), # Use RPCTPInput (pre-clustered RPC trigger primitives) instead of clustering RPCInput digis
     GEMEnable = cms.bool(False),  # Use hits from GEMs in track-building
     ME0Enable = cms.bool(False),
 

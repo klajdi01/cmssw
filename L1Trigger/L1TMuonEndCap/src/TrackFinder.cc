@@ -13,6 +13,8 @@ TrackFinder::TrackFinder(const edm::ParameterSet& iConfig, edm::ConsumesCollecto
       tokenCSCComparator_(iConsumes.consumes<emtf::CSCTag::comparator_digi_collection>(
           iConfig.getParameter<edm::InputTag>("CSCComparatorInput"))),
       tokenRPC_(iConsumes.consumes<emtf::RPCTag::digi_collection>(iConfig.getParameter<edm::InputTag>("RPCInput"))),
+      tokenRPCTP_(
+          iConsumes.consumes<emtf::RPCTPTag::digi_collection>(iConfig.getParameter<edm::InputTag>("RPCTPInput"))),
       tokenCPPF_(iConsumes.consumes<emtf::CPPFTag::digi_collection>(iConfig.getParameter<edm::InputTag>("CPPFInput"))),
       tokenGEM_(iConsumes.consumes<emtf::GEMTag::digi_collection>(iConfig.getParameter<edm::InputTag>("GEMInput"))),
       tokenME0_(iConsumes.consumes<emtf::ME0Tag::digi_collection>(iConfig.getParameter<edm::InputTag>("ME0Input"))),
@@ -58,6 +60,7 @@ void TrackFinder::process(const edm::Event& iEvent,
   auto useRPC = iConfig.getParameter<bool>("RPCEnable");
   auto useIRPC = iConfig.getParameter<bool>("IRPCEnable");
   auto useCPPF = iConfig.getParameter<bool>("CPPFEnable");
+  auto useRPCTP = iConfig.getParameter<bool>("RPCTPEnable");
   auto useGEM = iConfig.getParameter<bool>("GEMEnable");
   auto useME0 = iConfig.getParameter<bool>("ME0Enable");
 
@@ -67,10 +70,14 @@ void TrackFinder::process(const edm::Event& iEvent,
   }
   if (useRPC && useCPPF) {
     collector.extractPrimitives(emtf::CPPFTag(), tp_geom_, iEvent, tokenCPPF_, muon_primitives);
+  } else if (useRPC && useRPCTP) {
+    collector.extractPrimitives(emtf::RPCTPTag(), tp_geom_, iEvent, tokenRPCTP_, muon_primitives);
   } else if (useRPC) {
     collector.extractPrimitives(emtf::RPCTag(), tp_geom_, iEvent, tokenRPC_, muon_primitives);
   }
-  if (useIRPC) {
+  if (useIRPC && useRPCTP) {
+    collector.extractPrimitives(emtf::IRPCTPTag(), tp_geom_, iEvent, tokenRPCTP_, muon_primitives);
+  } else if (useIRPC) {
     collector.extractPrimitives(emtf::IRPCTag(), tp_geom_, iEvent, tokenRPC_, muon_primitives);
   }
   if (useGEM) {
