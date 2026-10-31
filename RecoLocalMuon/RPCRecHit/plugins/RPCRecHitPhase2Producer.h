@@ -33,11 +33,15 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 private:
-  void buildFromRPCPhase2(
-      const RPCRoll& roll, const RPCDetId& rpcId, const RPCDigiPhase2Collection::Range& range, RPCRecHitCollection& output) const;
+  void buildFromRPCPhase2(const RPCRoll& roll,
+                          const RPCDetId& rpcId,
+                          const RPCDigiPhase2Collection::Range& range,
+                          RPCRecHitCollection& output) const;
 
-  void buildFromIRPC(
-      const RPCRoll& roll, const RPCDetId& rpcId, const IRPCDigiCollection::Range& range, RPCRecHitCollection& output) const;
+  void buildFromIRPC(const RPCRoll& roll,
+                     const RPCDetId& rpcId,
+                     const IRPCDigiCollection::Range& range,
+                     RPCRecHitCollection& output) const;
 
   static bool isIRPCDetId(const RPCDetId& rpcId);
 

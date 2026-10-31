@@ -42,10 +42,10 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::cluster(const 
   auto key = [](const RPCDigi* digi) { return std::make_pair(digi->bx(), digi->strip()); };
   std::stable_sort(
       hits.begin(), hits.end(), [&](const RPCDigi* lhs, const RPCDigi* rhs) { return key(lhs) < key(rhs); });
-  hits.erase(std::unique(hits.begin(),
-                         hits.end(),
-                         [&](const RPCDigi* lhs, const RPCDigi* rhs) { return key(lhs) == key(rhs); }),
-             hits.end());
+  hits.erase(
+      std::unique(
+          hits.begin(), hits.end(), [&](const RPCDigi* lhs, const RPCDigi* rhs) { return key(lhs) == key(rhs); }),
+      hits.end());
 
   std::vector<RPCTriggerPrimitiveDigi> clusters;
   auto it = hits.begin();
@@ -78,8 +78,7 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::cluster(const 
   return clusters;
 }
 
-std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterIRPC(
-    const std::vector<IRPCDigi>& digis) const {
+std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterIRPC(const std::vector<IRPCDigi>& digis) const {
   struct Hit {
     int bx;
     int strip;

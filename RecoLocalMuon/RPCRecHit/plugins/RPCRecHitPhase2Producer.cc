@@ -24,8 +24,10 @@ bool RPCRecHitPhase2Producer::isIRPCDetId(const RPCDetId& rpcId) {
   return (rpcId.region() != 0) && (rpcId.ring() == 1) && (rpcId.station() == 3 || rpcId.station() == 4);
 }
 
-void RPCRecHitPhase2Producer::buildFromRPCPhase2(
-    const RPCRoll& roll, const RPCDetId& rpcId, const RPCDigiPhase2Collection::Range& range, RPCRecHitCollection& output) const {
+void RPCRecHitPhase2Producer::buildFromRPCPhase2(const RPCRoll& roll,
+                                                 const RPCDetId& rpcId,
+                                                 const RPCDigiPhase2Collection::Range& range,
+                                                 RPCRecHitCollection& output) const {
   const RPCClusterPhase2Container clusters = rpcClusterizer_.doAction(range);
 
   edm::OwnVector<RPCRecHit> hits;
@@ -38,8 +40,10 @@ void RPCRecHitPhase2Producer::buildFromRPCPhase2(
   }
 }
 
-void RPCRecHitPhase2Producer::buildFromIRPC(
-    const RPCRoll& roll, const RPCDetId& rpcId, const IRPCDigiCollection::Range& range, RPCRecHitCollection& output) const {
+void RPCRecHitPhase2Producer::buildFromIRPC(const RPCRoll& roll,
+                                            const RPCDetId& rpcId,
+                                            const IRPCDigiCollection::Range& range,
+                                            RPCRecHitCollection& output) const {
   const IRPCClusterContainer clusters = irpcClusterizer_.doAction(range);
 
   edm::OwnVector<RPCRecHit> hits;

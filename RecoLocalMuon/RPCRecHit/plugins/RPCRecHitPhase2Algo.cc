@@ -96,7 +96,9 @@ bool RPCRecHitPhase2Algo::compute(const RPCRoll& roll,
   return true;
 }
 
-RPCRecHit RPCRecHitPhase2Algo::build(const RPCRoll& roll, const RPCDetId& rpcId, const RPCClusterPhase2& cluster) const {
+RPCRecHit RPCRecHitPhase2Algo::build(const RPCRoll& roll,
+                                     const RPCDetId& rpcId,
+                                     const RPCClusterPhase2& cluster) const {
   LocalPoint point;
   LocalError error;
   float time = 0.f;
