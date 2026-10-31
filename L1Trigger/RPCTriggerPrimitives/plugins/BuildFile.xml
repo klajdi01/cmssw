@@ -1,0 +1,8 @@
+<use name="DataFormats/RPCDigi"/>
+<use name="FWCore/Framework"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/Utilities"/>
+<use name="L1Trigger/RPCTriggerPrimitives"/>
+<library file="*.cc" name="L1TriggerRPCTriggerPrimitivesPlugins">
+  <flags EDM_PLUGIN="1"/>
+</library>

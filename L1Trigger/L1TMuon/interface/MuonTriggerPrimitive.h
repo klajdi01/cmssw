@@ -29,6 +29,7 @@
 #include "DataFormats/MuonDetId/interface/CSCDetIdFwd.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHitFwd.h"
 #include "DataFormats/RPCDigi/interface/RPCDigiFwd.h"
+#include "DataFormats/RPCDigi/interface/RPCTriggerPrimitiveDigiFwd.h"
 #include "DataFormats/MuonDetId/interface/RPCDetIdFwd.h"
 #include "DataFormats/MuonDetId/interface/GEMDetIdFwd.h"
 #include "DataFormats/GEMDigi/interface/GEMPadDigiClusterFwd.h"
@@ -207,6 +208,7 @@ namespace L1TMuon {
     // Constructors from RPC data
     TriggerPrimitive(const RPCDetId& detid, const RPCDigi& digi);
     TriggerPrimitive(const RPCDetId& detid, const RPCRecHit& rechit);
+    TriggerPrimitive(const RPCDetId& detid, const RPCTriggerPrimitiveDigi& digi);
 
     // Constructor from CPPF data
     TriggerPrimitive(const RPCDetId& detid, const l1t::CPPFDigi& digi);

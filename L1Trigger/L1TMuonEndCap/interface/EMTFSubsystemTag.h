@@ -11,6 +11,8 @@
 #include "DataFormats/CSCDigi/interface/CSCComparatorDigiCollection.h"
 #include "DataFormats/RPCDigi/interface/RPCDigi.h"
 #include "DataFormats/RPCDigi/interface/RPCDigiCollection.h"
+#include "DataFormats/RPCDigi/interface/RPCTriggerPrimitiveDigi.h"
+#include "DataFormats/RPCDigi/interface/RPCTriggerPrimitiveDigiCollection.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHit.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHitCollection.h"
 #include "DataFormats/L1TMuon/interface/CPPFDigi.h"
@@ -47,6 +49,17 @@ namespace emtf {
     typedef RPCDigiCollection digi_collection;
     typedef RPCRecHit rechit_type;
     typedef RPCRecHitCollection rechit_collection;
+  };
+
+  // Pre-clustered RPC trigger primitives from RPCTriggerPrimitivesProducer
+  struct RPCTPTag {
+    typedef RPCTriggerPrimitiveDigi digi_type;
+    typedef RPCTriggerPrimitiveDigiCollection digi_collection;
+  };
+
+  struct IRPCTPTag {
+    typedef RPCTriggerPrimitiveDigi digi_type;
+    typedef RPCTriggerPrimitiveDigiCollection digi_collection;
   };
 
   struct CPPFTag {

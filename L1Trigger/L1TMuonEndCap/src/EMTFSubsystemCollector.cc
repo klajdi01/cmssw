@@ -7,6 +7,9 @@
 
 #include "helper.h"  // adjacent_cluster
 
+#include <algorithm>
+#include <tuple>
+
 // _____________________________________________________________________________
 // Specialized for DT
 template <>
@@ -279,6 +282,70 @@ void EMTFSubsystemCollector::extractPrimitives(emtf::IRPCTag tag,
     }
   }
   return;
+}
+
+// _____________________________________________________________________________
+// Specialized for RPC and iRPC trigger primitives (already clustered by RPCTriggerPrimitivesProducer)
+namespace {
+  template <typename Select>
+  void extractRPCTriggerPrimitives(const RPCTriggerPrimitiveDigiCollection& rpcTPs,
+                                   Select select,
+                                   TriggerPrimitiveCollection& out) {
+    TriggerPrimitiveCollection muon_primitives;
+
+    for (auto const& [detid, range] : rpcTPs) {
+      if (detid.region() == 0 || !select(detid))  // 0 is barrel
+        continue;
+      for (auto digi = range.first; digi != range.second; ++digi) {
+        muon_primitives.emplace_back(detid, *digi);
+      }
+    }
+
+    // Use the same order as cluster_rpc(), as PrimitiveSelection keeps only the first clusters in each chamber
+    std::stable_sort(
+        muon_primitives.begin(), muon_primitives.end(), [](const TriggerPrimitive& lhs, const TriggerPrimitive& rhs) {
+          return std::make_tuple(lhs.rawId(), lhs.getRPCData().bx, lhs.getRPCData().strip_low) <
+                 std::make_tuple(rhs.rawId(), rhs.getRPCData().bx, rhs.getRPCData().strip_low);
+        });
+
+    std::copy(muon_primitives.begin(), muon_primitives.end(), std::back_inserter(out));
+  }
+}  // namespace
+
+template <>
+void EMTFSubsystemCollector::extractPrimitives(emtf::RPCTPTag tag,
+                                               const GeometryTranslator* tp_geom,
+                                               const edm::Event& iEvent,
+                                               const edm::EDGetToken& token,
+                                               TriggerPrimitiveCollection& out) const {
+  edm::Handle<emtf::RPCTPTag::digi_collection> rpcTPs;
+  iEvent.getByToken(token, rpcTPs);
+
+  extractRPCTriggerPrimitives(
+      *rpcTPs,
+      [](const RPCDetId& detid) {
+        if (detid.station() <= 2 && detid.ring() == 3)
+          return false;  // do not include RE1/3, RE2/3
+        if (detid.station() >= 3 && detid.ring() == 1)
+          return false;  // do not include RE3/1, RE4/1 (iRPC)
+        return true;
+      },
+      out);
+}
+
+template <>
+void EMTFSubsystemCollector::extractPrimitives(emtf::IRPCTPTag tag,
+                                               const GeometryTranslator* tp_geom,
+                                               const edm::Event& iEvent,
+                                               const edm::EDGetToken& token,
+                                               TriggerPrimitiveCollection& out) const {
+  edm::Handle<emtf::IRPCTPTag::digi_collection> irpcTPs;
+  iEvent.getByToken(token, irpcTPs);
+
+  extractRPCTriggerPrimitives(
+      *irpcTPs,
+      [](const RPCDetId& detid) { return detid.station() >= 3 && detid.ring() == 1; },  // only RE3/1, RE4/1 (iRPC)
+      out);
 }
 
 // _____________________________________________________________________________

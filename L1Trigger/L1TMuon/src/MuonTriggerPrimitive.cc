@@ -6,6 +6,7 @@
 #include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigi.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHit.h"
 #include "DataFormats/RPCDigi/interface/RPCDigi.h"
+#include "DataFormats/RPCDigi/interface/RPCTriggerPrimitiveDigi.h"
 #include "DataFormats/L1TMuon/interface/CPPFDigi.h"
 #include "DataFormats/GEMDigi/interface/GEMPadDigiCluster.h"
 #include "DataFormats/GEMDigi/interface/ME0TriggerDigi.h"
@@ -190,6 +191,28 @@ TriggerPrimitive::TriggerPrimitive(const RPCDetId& detid, const RPCRecHit& rechi
   _rpc.x = rechit.localPosition().x();
   _rpc.y = rechit.localPosition().y();
   _rpc.time = rechit.time();
+  _rpc.isCPPF = false;
+}
+
+TriggerPrimitive::TriggerPrimitive(const RPCDetId& detid, const RPCTriggerPrimitiveDigi& digi)
+    : _id(detid), _subsystem(L1TMuon::kRPC) {
+  calculateGlobalSector(detid, _globalsector, _subsector);
+  _eta = 0.;
+  _phi = 0.;
+  _rho = 0.;
+  _theta = 0.;
+  _rpc.strip = digi.strip();
+  _rpc.strip_low = digi.stripLow();
+  _rpc.strip_hi = digi.stripHi();
+  _rpc.phi_int = 0;
+  _rpc.theta_int = 0;
+  _rpc.emtf_sector = 0;
+  _rpc.emtf_link = 0;
+  _rpc.bx = digi.bx();
+  _rpc.valid = digi.isValid();
+  _rpc.x = -999999.;
+  _rpc.y = -999999.;
+  _rpc.time = -999999.;
   _rpc.isCPPF = false;
 }
 
