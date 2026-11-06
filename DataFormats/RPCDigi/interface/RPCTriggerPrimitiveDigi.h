@@ -1,19 +1,8 @@
 #ifndef DataFormats_RPCDigi_RPCTriggerPrimitiveDigi_h
 #define DataFormats_RPCDigi_RPCTriggerPrimitiveDigi_h
 
-/** \class RPCTriggerPrimitiveDigi
- *
- * RPC trigger primitive: a cluster of adjacent fired strips in one roll
- * and one bunch crossing, as produced by RPCTriggerPrimitivesProducer
- * (L1Trigger/RPCTriggerPrimitives) for the L1 muon track finders.
- *
- * Strips are numbered from 1, as in RPCDigi.
- *
- * Optionally the cluster carries a time and a position along the strips
- * (local y), as measured by the iRPC two-end readout:
- *  - time: mean strip time in ns, 0 for a prompt muon (as in the digitizer)
- *  - y: mean local y in cm, 0 at the centre of the roll
- */
+/** RPC trigger primitive: a cluster of adjacent strips (numbered from 1) in one roll and one BX,
+ *  optionally with its mean time (ns, 0 for a prompt muon) and local y (cm, 0 at the roll centre). */
 
 #include <cstdint>
 #include <iosfwd>
@@ -43,6 +32,9 @@ namespace io_v1 {
       time_ = time;
       hasTime_ = true;
     }
+    /// Sub-BX of the time, in steps of 25/16 = 1.5625 ns from 0 to 15, as in the RPC digitizer
+    /// (RPCSynchronizer::getBX_SBX): floor(time / 1.5625 ns) modulo 16; 0 without time
+    int subbx() const;
 
     bool hasY() const { return hasY_; }
     float y() const { return y_; }
