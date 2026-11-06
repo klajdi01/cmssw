@@ -220,3 +220,147 @@ TEST_CASE("RPCTriggerPrimitivesBuilder::build with iRPC digis", "[RPCTriggerPrim
     REQUIRE(irpc[0].y() == Catch::Approx(yOf(irpcDigi(20, 1, 0, 0, 5))));
   }
 }
+
+TEST_CASE("RPCTriggerPrimitiveDigi::subbx", "[RPCTriggerPrimitives]") {
+  auto subbxOf = [](float time) {
+    TP tp(1, 1, 0);
+    tp.setTime(time);
+    return tp.subbx();
+  };
+  REQUIRE(TP(1, 1, 0).subbx() == 0);  // no time
+  REQUIRE(subbxOf(0.f) == 0);
+  REQUIRE(subbxOf(1.5625f) == 1);
+  REQUIRE(subbxOf(3.2f) == 2);       // 3.2 / 1.5625 = 2.05
+  REQUIRE(subbxOf(23.5f) == 15);     // last sub-BX of BX 0
+  REQUIRE(subbxOf(30.f) == 3);       // 5 ns after the start of BX 1
+  REQUIRE(subbxOf(-1.0f) == 15);     // BX -1, as in the digitizer
+  REQUIRE(subbxOf(-1.5625f) == 15);  // RPCDigiPhase2(strip, -1, 15)
+}
+
+TEST_CASE("RPCTriggerPrimitivesBuilder::bxOfTime", "[RPCTriggerPrimitives]") {
+  REQUIRE(RPCTriggerPrimitivesBuilder::bxOfTime(0.f) == 0);
+  REQUIRE(RPCTriggerPrimitivesBuilder::bxOfTime(-1.3f) == 0);
+  REQUIRE(RPCTriggerPrimitivesBuilder::bxOfTime(12.4f) == 0);
+  REQUIRE(RPCTriggerPrimitivesBuilder::bxOfTime(-13.f) == -1);
+  REQUIRE(RPCTriggerPrimitivesBuilder::bxOfTime(25.f) == 1);
+}
+
+TEST_CASE("RPCTriggerPrimitivesBuilder::clusterPhase2", "[RPCTriggerPrimitives]") {
+  RPCTriggerPrimitivesBuilder builder(RPCTriggerPrimitivesBuilder::Config{});
+  using Digi = RPCDigiPhase2;  // (strip, bx, sub-BX of 1.5625 ns)
+
+  SECTION("empty input") { REQUIRE(builder.clusterPhase2({}).empty()); }
+
+  SECTION("adjacent strips in the same sub-BX are merged, with the time of the sub-BX") {
+    auto out = builder.clusterPhase2({Digi(6, 0, 1), Digi(5, 0, 1)});
+    REQUIRE(out == std::vector<TP>{TP(5, 6, 0)});
+    REQUIRE(out[0].hasTime());
+    REQUIRE(out[0].time() == Catch::Approx(1.5625));
+    REQUIRE(out[0].subbx() == 1);
+    REQUIRE_FALSE(out[0].hasY());
+  }
+
+  SECTION("sub-BX window: a spread of 2 sub-BX is merged, 3 is split") {
+    REQUIRE(builder.clusterPhase2({Digi(5, 0, 0), Digi(6, 0, 2)}) == std::vector<TP>{TP(5, 6, 0)});
+    REQUIRE(builder.clusterPhase2({Digi(5, 0, 0), Digi(6, 0, 3)}) == std::vector<TP>{TP(5, 5, 0), TP(6, 6, 0)});
+  }
+
+  SECTION("the window is on the spread of the whole cluster") {
+    auto out = builder.clusterPhase2({Digi(5, 0, 0), Digi(6, 0, 2), Digi(7, 0, 4)});
+    REQUIRE(out == std::vector<TP>{TP(5, 6, 0), TP(7, 7, 0)});
+  }
+
+  SECTION("the window is configurable and can be disabled") {
+    RPCTriggerPrimitivesBuilder::Config config;
+    config.maxSubBXSpreadRPC = -1;
+    RPCTriggerPrimitivesBuilder noWindow(config);
+    REQUIRE(noWindow.clusterPhase2({Digi(5, 0, 0), Digi(6, 0, 7)}) == std::vector<TP>{TP(5, 6, 0)});
+  }
+
+  SECTION("default: the BX of the digis is kept, as in the RecHits") {
+    // t = -1.5625 ns (BX -1, sub-BX 15) and t = 0 (BX 0, sub-BX 0)
+    auto out = builder.clusterPhase2({Digi(5, -1, 15), Digi(6, 0, 0)});
+    REQUIRE(out == std::vector<TP>{TP(5, 5, -1), TP(6, 6, 0)});
+    REQUIRE(out[0].subbx() == 15);
+    REQUIRE(out[1].subbx() == 0);
+  }
+
+  SECTION("with bxFromTime, a prompt muon on the BX border stays in one cluster in BX 0") {
+    RPCTriggerPrimitivesBuilder::Config config;
+    config.bxFromTime = true;
+    RPCTriggerPrimitivesBuilder timeBX(config);
+    auto out = timeBX.clusterPhase2({Digi(5, -1, 15), Digi(6, 0, 0)});
+    REQUIRE(out == std::vector<TP>{TP(5, 6, 0)});
+    REQUIRE(out[0].time() == Catch::Approx(-0.78125));
+  }
+
+  SECTION("duplicates keep the earliest hit") {
+    auto out = builder.clusterPhase2({Digi(5, 0, 3), Digi(5, 0, 1)});
+    REQUIRE(out == std::vector<TP>{TP(5, 5, 0)});
+    REQUIRE(out[0].time() == Catch::Approx(1.5625));
+  }
+
+  SECTION("gap and BX split clusters, output ordered by BX and first strip") {
+    auto out = builder.clusterPhase2({Digi(9, 1, 0), Digi(2, 0, 0), Digi(1, 0, 0), Digi(4, 0, 0)});
+    REQUIRE(out == std::vector<TP>{TP(1, 2, 0), TP(4, 4, 0), TP(9, 9, 1)});
+  }
+}
+
+TEST_CASE("RPCTriggerPrimitivesBuilder::clusterIRPC BX", "[RPCTriggerPrimitives]") {
+  // Prompt muon: strip 5 has its LR end time in BX -1 (t_LR = -0.1 ns, t_HR = 0.2 ns),
+  // strip 6 in BX 0 (t_LR = 0, t_HR = 0.2 ns)
+  const IRPCDigi digi5(5, -1, 0, 9, 0, 12, 1);
+  const IRPCDigi digi6(6, 0, 0, 0, 0, 0, 1);
+  REQUIRE(digi5.bx() == -1);
+  REQUIRE(timeOf(digi5) == Catch::Approx(0.05).margin(1e-4));
+
+  SECTION("default: BX of the LR end, as in the RecHits") {
+    RPCTriggerPrimitivesBuilder builder(RPCTriggerPrimitivesBuilder::Config{});
+    REQUIRE(builder.clusterIRPC({digi5, digi6}) == std::vector<TP>{TP(5, 5, -1), TP(6, 6, 0)});
+  }
+
+  SECTION("with bxFromTime, the strips are grouped and the BX taken from the time") {
+    RPCTriggerPrimitivesBuilder::Config config;
+    config.bxFromTime = true;
+    RPCTriggerPrimitivesBuilder builder(config);
+    REQUIRE(builder.clusterIRPC({digi5}) == std::vector<TP>{TP(5, 5, 0)});
+    auto out = builder.clusterIRPC({digi5, digi6});
+    REQUIRE(out == std::vector<TP>{TP(5, 6, 0)});
+    REQUIRE(out[0].subbx() == 0);
+  }
+}
+
+TEST_CASE("RPCTriggerPrimitivesBuilder::build with Phase-2 RPC digis", "[RPCTriggerPrimitives]") {
+  RPCDigiCollection digis;
+  for (int strip : {10, 11, 12})
+    digis.insertDigi(kRE12, RPCDigi(strip, 0));
+  digis.insertDigi(kRE31, RPCDigi(1, 0));
+
+  RPCDigiPhase2Collection phase2Digis;
+  phase2Digis.insertDigi(kRE12, RPCDigiPhase2(20, 0, 1));
+  phase2Digis.insertDigi(kRE12, RPCDigiPhase2(21, 0, 1));
+  phase2Digis.insertDigi(kRE31, RPCDigiPhase2(40, 0, 0));
+  phase2Digis.insertDigi(kRB1, RPCDigiPhase2(8, 0, 0));  // barrel: skipped by default
+
+  IRPCDigiCollection irpcDigis;
+  irpcDigis.insertDigi(kRE31, irpcDigi(30, 0, 0, 0, 0));
+
+  RPCTriggerPrimitivesBuilder builder(RPCTriggerPrimitivesBuilder::Config{});
+
+  SECTION("RPC chambers come from the Phase-2 RPC digis, iRPC chambers from the iRPC digis") {
+    RPCTriggerPrimitiveDigiCollection out;
+    builder.build(digis, &phase2Digis, &irpcDigis, out);
+    auto rpc = clustersOf(out, kRE12);
+    REQUIRE(rpc == std::vector<TP>{TP(20, 21, 0)});
+    REQUIRE(rpc[0].time() == Catch::Approx(1.5625));
+    REQUIRE(clustersOf(out, kRE31) == std::vector<TP>{TP(30, 30, 0)});
+    REQUIRE(clustersOf(out, kRB1).empty());
+  }
+
+  SECTION("without iRPC digis, iRPC chambers also come from the Phase-2 RPC digis") {
+    RPCTriggerPrimitiveDigiCollection out;
+    builder.build(digis, &phase2Digis, nullptr, out);
+    REQUIRE(clustersOf(out, kRE12) == std::vector<TP>{TP(20, 21, 0)});
+    REQUIRE(clustersOf(out, kRE31) == std::vector<TP>{TP(40, 40, 0)});
+  }
+}

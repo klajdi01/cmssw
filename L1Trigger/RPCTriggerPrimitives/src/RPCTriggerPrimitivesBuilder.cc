@@ -1,23 +1,45 @@
 #include "L1Trigger/RPCTriggerPrimitives/interface/RPCTriggerPrimitivesBuilder.h"
 
 #include "DataFormats/RPCDigi/interface/IRPCDigiTime.h"
+#include "DataFormats/RPCDigi/interface/RPCDigiPhase2Time.h"
 
 #include <algorithm>
+#include <cmath>
 #include <tuple>
 #include <utility>
 
+namespace {
+  constexpr int kSubBXPerBX = 16;  // RPCDigiPhase2 sub-BX of 25/16 = 1.5625 ns
+}  // namespace
+
+int RPCTriggerPrimitivesBuilder::bxOfTime(float time) { return static_cast<int>(std::round(time / 25.)); }
+
 void RPCTriggerPrimitivesBuilder::build(const RPCDigiCollection& digis,
+                                        const RPCDigiPhase2Collection* rpcDigisPhase2,
                                         const IRPCDigiCollection* irpcDigis,
                                         RPCTriggerPrimitiveDigiCollection& out) const {
-  for (auto const& [detId, range] : digis) {
-    if (detId.region() == 0 && !config_.includeBarrel)
-      continue;
-    if (irpcDigis != nullptr && isIRPC(detId))
-      continue;  // taken from the iRPC digis below
+  if (rpcDigisPhase2 == nullptr) {
+    for (auto const& [detId, range] : digis) {
+      if (detId.region() == 0 && !config_.includeBarrel)
+        continue;
+      if (irpcDigis != nullptr && isIRPC(detId))
+        continue;  // taken from the iRPC digis below
 
-    std::vector<RPCDigi> rollDigis(range.first, range.second);
-    std::vector<RPCTriggerPrimitiveDigi> clusters = cluster(rollDigis);
-    put(detId, clusters, out);
+      std::vector<RPCDigi> rollDigis(range.first, range.second);
+      std::vector<RPCTriggerPrimitiveDigi> clusters = cluster(rollDigis);
+      put(detId, clusters, out);
+    }
+  } else {
+    for (auto const& [detId, range] : *rpcDigisPhase2) {
+      if (detId.region() == 0 && !config_.includeBarrel)
+        continue;
+      if (irpcDigis != nullptr && isIRPC(detId))
+        continue;  // taken from the iRPC digis below
+
+      std::vector<RPCDigiPhase2> rollDigis(range.first, range.second);
+      std::vector<RPCTriggerPrimitiveDigi> clusters = clusterPhase2(rollDigis);
+      put(detId, clusters, out);
+    }
   }
 
   if (irpcDigis == nullptr)
@@ -78,9 +100,65 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::cluster(const 
   return clusters;
 }
 
+std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterPhase2(
+    const std::vector<RPCDigiPhase2>& digis) const {
+  struct Hit {
+    int bx;  // BX in which the strips are grouped: from the time or from the digi
+    int strip;
+    int subbx;  // time in sub-BX since BX 0, sub-BX 0
+  };
+
+  std::vector<Hit> hits;
+  hits.reserve(digis.size());
+  for (auto const& digi : digis) {
+    const float time = RPCDigiPhase2Time(digi).time();
+    hits.push_back(
+        {config_.bxFromTime ? bxOfTime(time) : digi.bx(), digi.strip(), kSubBXPerBX * digi.bx() + digi.sbx()});
+  }
+
+  // Hits sorted by (bx, strip, sub-BX), keeping only the earliest hit of each strip
+  std::sort(hits.begin(), hits.end(), [](const Hit& lhs, const Hit& rhs) {
+    return std::make_tuple(lhs.bx, lhs.strip, lhs.subbx) < std::make_tuple(rhs.bx, rhs.strip, rhs.subbx);
+  });
+  hits.erase(std::unique(hits.begin(),
+                         hits.end(),
+                         [](const Hit& lhs, const Hit& rhs) { return lhs.bx == rhs.bx && lhs.strip == rhs.strip; }),
+             hits.end());
+
+  std::vector<RPCTriggerPrimitiveDigi> clusters;
+  auto it = hits.begin();
+  while (it != hits.end()) {
+    const int bx = it->bx;
+    const int stripLow = it->strip;
+    int stripHi = stripLow;
+    int minSubBX = it->subbx, maxSubBX = it->subbx, sumSubBX = 0, n = 0;
+    auto inWindow = [&](const Hit& hit) {
+      return config_.maxSubBXSpreadRPC < 0 ||
+             std::max(maxSubBX, hit.subbx) - std::min(minSubBX, hit.subbx) <= config_.maxSubBXSpreadRPC;
+    };
+    // Extend the cluster while the next strip in the same BX is adjacent and within the sub-BX window
+    do {
+      stripHi = it->strip;
+      minSubBX = std::min(minSubBX, it->subbx);
+      maxSubBX = std::max(maxSubBX, it->subbx);
+      sumSubBX += it->subbx;
+      ++n;
+    } while (++it != hits.end() && it->bx == bx && it->strip == stripHi + 1 && inWindow(*it));
+
+    // Mean time, the same as the mean of RPCDigiPhase2Time
+    const float time = 25.f / kSubBXPerBX * sumSubBX / n;
+    RPCTriggerPrimitiveDigi tp(stripLow, stripHi, config_.bxFromTime ? bxOfTime(time) : bx);
+    tp.setTime(time);
+    clusters.push_back(tp);
+  }
+
+  std::stable_sort(clusters.begin(), clusters.end());  // by BX, then first strip
+  return clusters;
+}
+
 std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterIRPC(const std::vector<IRPCDigi>& digis) const {
   struct Hit {
-    int bx;
+    int bx;  // BX in which the strips are grouped: from the time or from the digi (LR end)
     int strip;
     float time;
     float y;
@@ -90,7 +168,8 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterIRPC(co
   hits.reserve(digis.size());
   for (auto const& digi : digis) {
     IRPCDigiTime digiTime(digi);
-    hits.push_back({digi.bx(), digi.strip(), digiTime.time(), digiTime.coordinateY()});
+    const float time = digiTime.time();
+    hits.push_back({config_.bxFromTime ? bxOfTime(time) : digi.bx(), digi.strip(), time, digiTime.coordinateY()});
   }
 
   // Same order as IRPCClusterizer: BX and strip descending, then time and y ascending
@@ -129,8 +208,9 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterIRPC(co
       ++n;
     }
 
-    RPCTriggerPrimitiveDigi tp(stripLow, stripHi, bx);
-    tp.setTime(sumTime / n);
+    const float time = sumTime / n;
+    RPCTriggerPrimitiveDigi tp(stripLow, stripHi, config_.bxFromTime ? bxOfTime(time) : bx);
+    tp.setTime(time);
     tp.setY(sumY / n);
     clusters.push_back(tp);
   }

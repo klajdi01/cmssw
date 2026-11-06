@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-# Compares the EMTF hits and tracks of the two EMTF instances written by
-# runRPCTriggerPrimitivesEMTF_cfg.py (RPC digis clustered inside EMTF vs.
-# RPC trigger primitives), event by event.
-#
-#   python3 compareEMTFOutputs.py rpcTriggerPrimitivesEMTF.root
+# Compares event by event the two EMTF outputs of runRPCTriggerPrimitivesEMTF_cfg.py
+# Usage: python3 compareEMTFOutputs.py rpcTriggerPrimitivesEMTF.root
 
 import argparse
 import ROOT

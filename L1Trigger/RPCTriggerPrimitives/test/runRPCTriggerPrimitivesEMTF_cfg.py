@@ -1,11 +1,5 @@
-# Runs the RPC trigger primitive producer and the Phase-1 EMTF emulator twice:
-#   simEmtfDigis       : RPC digis clustered inside EMTF (current default)
-#   simEmtfDigisRPCTP  : RPC trigger primitives from simRpcTriggerPrimitiveDigis
-# The two EMTF hit and track collections are expected to be identical.
-#
-# Input: a Run-3 GEN-SIM-DIGI-RAW file containing simMuonRPCDigis and
-# simCscTriggerPrimitiveDigis:MPCSORTED, e.g.
-#   cmsRun runRPCTriggerPrimitivesEMTF_cfg.py inputFiles=file:step2.root maxEvents=100
+# Runs the Phase-1 EMTF with RPC digis and with RPC trigger primitives; the outputs are expected to be identical.
+# Input: Run-3 GEN-SIM-DIGI-RAW, e.g. cmsRun runRPCTriggerPrimitivesEMTF_cfg.py inputFiles=file:step2.root maxEvents=100
 
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
