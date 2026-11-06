@@ -51,12 +51,12 @@ private:
 
   // Counters for one kind of chamber (endcap RPC or iRPC)
   struct Counts {
-    long nTPs = 0;          // trigger primitives
-    long nWithTime = 0;     // ... with a time (and a local y for iRPC)
-    long nBXFromTime = 0;   // ... with BX == round(time / 25 ns)
-    long nRecHits = 0;      // RecHits
-    long nMatched = 0;      // trigger primitives with a RecHit of the same strips and BX
-    long nSame = 0;         // ... and the same time (and local y for iRPC)
+    long nTPs = 0;         // trigger primitives
+    long nWithTime = 0;    // ... with a time (and a local y for iRPC)
+    long nBXFromTime = 0;  // ... with BX == round(time / 25 ns)
+    long nRecHits = 0;     // RecHits
+    long nMatched = 0;     // trigger primitives with a RecHit of the same strips and BX
+    long nSame = 0;        // ... and the same time (and local y for iRPC)
     double maxDiffTime = 0.;
     double maxDiffY = 0.;
     Stats time, y;
