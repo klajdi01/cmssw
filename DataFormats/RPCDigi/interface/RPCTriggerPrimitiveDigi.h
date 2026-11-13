@@ -1,8 +1,8 @@
 #ifndef DataFormats_RPCDigi_RPCTriggerPrimitiveDigi_h
 #define DataFormats_RPCDigi_RPCTriggerPrimitiveDigi_h
 
-/** RPC trigger primitive: a cluster of adjacent strips (numbered from 1) in one roll and one BX,
- *  optionally with its mean time (ns, 0 for a prompt muon) and local y (cm, 0 at the roll centre). */
+/** RPC trigger primitive: a cluster of adjacent strips (numbered from 1) in one roll and one BX, optionally
+ *  with its sub-BX, mean time (ns, 0 for a prompt muon) and local y (cm, 0 at the roll centre). */
 
 #include <cstdint>
 #include <iosfwd>
@@ -32,9 +32,14 @@ namespace io_v1 {
       time_ = time;
       hasTime_ = true;
     }
-    /// Sub-BX of the time, in steps of 25/16 = 1.5625 ns from 0 to 15, as in the RPC digitizer
-    /// (RPCSynchronizer::getBX_SBX): floor(time / 1.5625 ns) modulo 16; 0 without time
-    int subbx() const;
+    /// Sub-BX of the first strip in time, from the digis: RPCDigiPhase2::sbx() (1.5625 ns, 0-15)
+    /// or, for iRPC, IRPCDigi::sbxLR() (2.5 ns, 0-9); 0 if not set
+    bool hasSubBX() const { return hasSubBX_; }
+    int subbx() const { return subbx_; }
+    void setSubBX(int subbx) {
+      subbx_ = subbx;
+      hasSubBX_ = true;
+    }
 
     bool hasY() const { return hasY_; }
     float y() const { return y_; }
@@ -49,10 +54,12 @@ namespace io_v1 {
     uint16_t stripLow_;
     uint16_t stripHi_;
     int16_t bx_;
+    int8_t subbx_;
     float time_;
     float y_;
     bool hasTime_;
     bool hasY_;
+    bool hasSubBX_;
   };
 
   std::ostream& operator<<(std::ostream& o, const RPCTriggerPrimitiveDigi& digi);

@@ -9,7 +9,8 @@
 #include <utility>
 
 namespace {
-  constexpr int kSubBXPerBX = 16;  // RPCDigiPhase2 sub-BX of 25/16 = 1.5625 ns
+  constexpr int kSubBXPerBX = 16;      // RPCDigiPhase2 sub-BX of 25/16 = 1.5625 ns
+  constexpr int kIRPCSubBXPerBX = 10;  // IRPCDigi sub-BX of 2.5 ns
 }  // namespace
 
 int RPCTriggerPrimitivesBuilder::bxOfTime(float time) { return static_cast<int>(std::round(time / 25.)); }
@@ -147,7 +148,9 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterPhase2(
 
     // Mean time, the same as the mean of RPCDigiPhase2Time
     const float time = 25.f / kSubBXPerBX * sumSubBX / n;
-    RPCTriggerPrimitiveDigi tp(stripLow, stripHi, config_.bxFromTime ? bxOfTime(time) : bx);
+    const int tpBX = config_.bxFromTime ? bxOfTime(time) : bx;
+    RPCTriggerPrimitiveDigi tp(stripLow, stripHi, tpBX);
+    tp.setSubBX(minSubBX - kSubBXPerBX * tpBX);  // RPCDigiPhase2::sbx() of the first strip in time
     tp.setTime(time);
     clusters.push_back(tp);
   }
@@ -162,6 +165,7 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterIRPC(co
     int strip;
     float time;
     float y;
+    int subbx;  // LR end sub-BX since BX 0, sub-BX 0: 10 * bxLR + sbxLR
   };
 
   std::vector<Hit> hits;
@@ -169,7 +173,11 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterIRPC(co
   for (auto const& digi : digis) {
     IRPCDigiTime digiTime(digi);
     const float time = digiTime.time();
-    hits.push_back({config_.bxFromTime ? bxOfTime(time) : digi.bx(), digi.strip(), time, digiTime.coordinateY()});
+    hits.push_back({config_.bxFromTime ? bxOfTime(time) : digi.bx(),
+                    digi.strip(),
+                    time,
+                    digiTime.coordinateY(),
+                    kIRPCSubBXPerBX * digi.bxLR() + digi.sbxLR()});
   }
 
   // Same order as IRPCClusterizer: BX and strip descending, then time and y ascending
@@ -187,6 +195,7 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterIRPC(co
     int stripLow = stripHi;
     float minTime = it->time, maxTime = it->time, sumTime = it->time;
     float minY = it->y, maxY = it->y, sumY = it->y;
+    int minSubBX = it->subbx;
     int n = 1;
 
     // Add the same strip or the next lower one, while the time and y spreads stay small enough
@@ -205,11 +214,14 @@ std::vector<RPCTriggerPrimitiveDigi> RPCTriggerPrimitivesBuilder::clusterIRPC(co
       minY = std::min(minY, it->y);
       maxY = std::max(maxY, it->y);
       sumY += it->y;
+      minSubBX = std::min(minSubBX, it->subbx);
       ++n;
     }
 
     const float time = sumTime / n;
-    RPCTriggerPrimitiveDigi tp(stripLow, stripHi, config_.bxFromTime ? bxOfTime(time) : bx);
+    const int tpBX = config_.bxFromTime ? bxOfTime(time) : bx;
+    RPCTriggerPrimitiveDigi tp(stripLow, stripHi, tpBX);
+    tp.setSubBX(minSubBX - kIRPCSubBXPerBX * tpBX);  // IRPCDigi::sbxLR() of the earliest strip (2.5 ns)
     tp.setTime(time);
     tp.setY(sumY / n);
     clusters.push_back(tp);
