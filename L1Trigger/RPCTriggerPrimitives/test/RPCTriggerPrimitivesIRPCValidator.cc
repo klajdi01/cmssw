@@ -126,10 +126,11 @@ void RPCTriggerPrimitivesIRPCValidator::analyze(const edm::Event& event, const e
     for (auto tp = range.first; tp != range.second; ++tp) {
       ++counts.nTPs;
       ++counts.bx[tp->bx()];
+      if (tp->hasSubBX())
+        ++counts.subbx[tp->subbx()];
       if (!tp->hasTime() || (isIRPC && !tp->hasY()))
         continue;
       ++counts.nWithTime;
-      ++counts.subbx[tp->subbx()];
       if (tp->bx() == RPCTriggerPrimitivesBuilder::bxOfTime(tp->time()))
         ++counts.nBXFromTime;
       counts.time.fill(tp->time());
@@ -177,7 +178,10 @@ void RPCTriggerPrimitivesIRPCValidator::print(const std::string& name, const Cou
             << "  per BX                          :";
   for (auto const& [bx, n] : counts.bx)
     std::cout << "  " << bx << ": " << n;
-  std::cout << "\n  per sub-BX (1.5625 ns)          :";
+  std::cout << "\n"
+            << std::setw(34) << (withY ? "  per sub-BX (IRPCDigi::sbxLR)" : "  per sub-BX (RPCDigiPhase2::sbx)") << ":";
+  if (counts.subbx.empty())
+    std::cout << "  not set";
   for (auto const& [subbx, n] : counts.subbx)
     std::cout << "  " << subbx << ": " << n;
   std::cout << "\n  time (ns) mean, RMS             : " << counts.time.mean() << ", " << counts.time.rms() << "\n";

@@ -222,19 +222,14 @@ TEST_CASE("RPCTriggerPrimitivesBuilder::build with iRPC digis", "[RPCTriggerPrim
 }
 
 TEST_CASE("RPCTriggerPrimitiveDigi::subbx", "[RPCTriggerPrimitives]") {
-  auto subbxOf = [](float time) {
-    TP tp(1, 1, 0);
-    tp.setTime(time);
-    return tp.subbx();
-  };
-  REQUIRE(TP(1, 1, 0).subbx() == 0);  // no time
-  REQUIRE(subbxOf(0.f) == 0);
-  REQUIRE(subbxOf(1.5625f) == 1);
-  REQUIRE(subbxOf(3.2f) == 2);       // 3.2 / 1.5625 = 2.05
-  REQUIRE(subbxOf(23.5f) == 15);     // last sub-BX of BX 0
-  REQUIRE(subbxOf(30.f) == 3);       // 5 ns after the start of BX 1
-  REQUIRE(subbxOf(-1.0f) == 15);     // BX -1, as in the digitizer
-  REQUIRE(subbxOf(-1.5625f) == 15);  // RPCDigiPhase2(strip, -1, 15)
+  TP tp(1, 1, 0);
+  REQUIRE_FALSE(tp.hasSubBX());
+  REQUIRE(tp.subbx() == 0);
+  tp.setTime(5.f);
+  REQUIRE_FALSE(tp.hasSubBX());  // not computed from the time
+  tp.setSubBX(15);
+  REQUIRE(tp.hasSubBX());
+  REQUIRE(tp.subbx() == 15);
 }
 
 TEST_CASE("RPCTriggerPrimitivesBuilder::bxOfTime", "[RPCTriggerPrimitives]") {
@@ -256,8 +251,16 @@ TEST_CASE("RPCTriggerPrimitivesBuilder::clusterPhase2", "[RPCTriggerPrimitives]"
     REQUIRE(out == std::vector<TP>{TP(5, 6, 0)});
     REQUIRE(out[0].hasTime());
     REQUIRE(out[0].time() == Catch::Approx(1.5625));
+    REQUIRE(out[0].hasSubBX());
     REQUIRE(out[0].subbx() == 1);
     REQUIRE_FALSE(out[0].hasY());
+  }
+
+  SECTION("the sub-BX of the cluster is the digi sub-BX of the first strip in time") {
+    auto out = builder.clusterPhase2({Digi(5, 0, 3), Digi(6, 0, 2), Digi(7, 0, 4)});
+    REQUIRE(out == std::vector<TP>{TP(5, 7, 0)});
+    REQUIRE(out[0].subbx() == 2);
+    REQUIRE(out[0].time() == Catch::Approx(3 * 1.5625));  // mean of sub-BX 3, 2 and 4
   }
 
   SECTION("sub-BX window: a spread of 2 sub-BX is merged, 3 is split") {
@@ -292,6 +295,7 @@ TEST_CASE("RPCTriggerPrimitivesBuilder::clusterPhase2", "[RPCTriggerPrimitives]"
     auto out = timeBX.clusterPhase2({Digi(5, -1, 15), Digi(6, 0, 0)});
     REQUIRE(out == std::vector<TP>{TP(5, 6, 0)});
     REQUIRE(out[0].time() == Catch::Approx(-0.78125));
+    REQUIRE(out[0].subbx() == -1);  // BX -1, sub-BX 15 counted from BX 0
   }
 
   SECTION("duplicates keep the earliest hit") {
@@ -316,7 +320,18 @@ TEST_CASE("RPCTriggerPrimitivesBuilder::clusterIRPC BX", "[RPCTriggerPrimitives]
 
   SECTION("default: BX of the LR end, as in the RecHits") {
     RPCTriggerPrimitivesBuilder builder(RPCTriggerPrimitivesBuilder::Config{});
-    REQUIRE(builder.clusterIRPC({digi5, digi6}) == std::vector<TP>{TP(5, 5, -1), TP(6, 6, 0)});
+    auto out = builder.clusterIRPC({digi5, digi6});
+    REQUIRE(out == std::vector<TP>{TP(5, 5, -1), TP(6, 6, 0)});
+    REQUIRE(out[0].subbx() == 9);  // sbxLR() of the digi
+    REQUIRE(out[1].subbx() == 0);
+  }
+
+  SECTION("the sub-BX of the cluster is the earliest sbxLR() of its strips (2.5 ns)") {
+    RPCTriggerPrimitivesBuilder builder(RPCTriggerPrimitivesBuilder::Config{});
+    auto out = builder.clusterIRPC({irpcDigi(21, 3, 0, 3, 0), irpcDigi(20, 2, 0, 2, 0)});
+    REQUIRE(out == std::vector<TP>{TP(20, 21, 0)});
+    REQUIRE(out[0].hasSubBX());
+    REQUIRE(out[0].subbx() == 2);
   }
 
   SECTION("with bxFromTime, the strips are grouped and the BX taken from the time") {
@@ -326,7 +341,7 @@ TEST_CASE("RPCTriggerPrimitivesBuilder::clusterIRPC BX", "[RPCTriggerPrimitives]
     REQUIRE(builder.clusterIRPC({digi5}) == std::vector<TP>{TP(5, 5, 0)});
     auto out = builder.clusterIRPC({digi5, digi6});
     REQUIRE(out == std::vector<TP>{TP(5, 6, 0)});
-    REQUIRE(out[0].subbx() == 0);
+    REQUIRE(out[0].subbx() == -1);  // strip 5: BX -1, sbxLR 9, counted from BX 0
   }
 }
 
@@ -353,6 +368,7 @@ TEST_CASE("RPCTriggerPrimitivesBuilder::build with Phase-2 RPC digis", "[RPCTrig
     auto rpc = clustersOf(out, kRE12);
     REQUIRE(rpc == std::vector<TP>{TP(20, 21, 0)});
     REQUIRE(rpc[0].time() == Catch::Approx(1.5625));
+    REQUIRE(rpc[0].subbx() == 1);
     REQUIRE(clustersOf(out, kRE31) == std::vector<TP>{TP(30, 30, 0)});
     REQUIRE(clustersOf(out, kRB1).empty());
   }
